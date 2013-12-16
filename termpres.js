@@ -12,10 +12,9 @@ var TITLE = 'Node.js In Production At Joyent';
 var FOOTL = 'Joshua M. Clulow';
 var FOOTR = '\u2295 Joyent';
 
-var SLIDE;
-var MAXWIDTH;
+var FADE_DELAY = 15;
 
-console.log(SLIDE);
+var SLIDE;
 
 function
 spin(num)
@@ -35,34 +34,47 @@ for (var i = 0; i < SLIDE.length; i++) {
 	var line = SLIDE[i];
 */
 
+var INTENSITY = 232;
+var IMAX = 255;
+var IMIN = 232;
+
+var ANIM;
+
 function
-fade(text, out, callback)
+fade(slide, out, callback)
 {
-	var dir = out ? -1 : 1;
-	var from = out ? 255 : 232;
-	var to = out ? 232 : 255;
+	//var from = out ? 255 : 232;
+	//var to = out ? 232 : 255;
 
-	var offset = Math.round(TERM.size().w / 2 - MAXWIDTH / 2);
+	if (!slide) {
+		callback();
+		return;
+	}
 
-	var j = from;
-	var int = setInterval(function() {
-	//TERM.moveto(1, 2);
-	//TERM.write('maxw: ' + MAXWIDTH + '  offset: ' + offset + '  j: ' + j);
-		TERM.colour256(j);
+	var offset = slide.props.centre ? Math.round(TERM.size().w / 2 -
+	    slide.maxwidth / 2) : 0;
 
-		var LL = text.split('\n');
-		for (var ll = 0; ll < LL.length; ll++) {
-			TERM.moveto(1 + offset, 2 + ll);
-			TERM.write(LL[ll]);
+	var voffset = slide.props.vcentre ? Math.floor(TERM.size().h / 2 -
+	    2 - slide.lines.length / 2) + 2: 2;
+
+	clearInterval(ANIM);
+	ANIM = setInterval(function() {
+		TERM.colour256(INTENSITY);
+
+		for (var ll = 0; ll < slide.lines.length; ll++) {
+			TERM.moveto(1 + offset, voffset + ll);
+			TERM.write(slide.lines[ll]);
 		}
 
-		if (j === to) {
-			clearInterval(int);
+		if ((out && INTENSITY <= IMIN) ||
+		    (!out && INTENSITY >= IMAX)) {
+			clearInterval(ANIM);
+			ANIM = null;
 			callback();
 		} else {
-			j += dir;
+			INTENSITY += out ? -1 : 1;
 		}
-	}, 50);
+	}, FADE_DELAY);
 }
 
 function
@@ -109,7 +121,7 @@ max_line_width(text)
 	return (max);
 }
 
-var IDX = 0;
+/*
 function
 display_all_slides()
 {
@@ -124,6 +136,157 @@ display_all_slides()
 
 	display_slide(SLIDE, display_all_slides);
 }
+*/
+
+function
+switch_slide(idx, callback)
+{
+	var new_slide;
+
+	if (!callback)
+		callback = function () {};
+
+	try {
+		var new_slide = {
+			text: mod_fs.readFileSync(mod_path.join(__dirname,
+			    'slides', String(idx)), 'utf8'),
+			maxwidth: 0,
+			props: {}
+		};
+		new_slide.lines = new_slide.text.split(/\n/);
+		var new_props = new_slide.lines.shift().trim().split(/\s+/);
+		for (var i = 0; i < new_props.length; i++) {
+			new_slide.props[new_props[i]] = true;
+		}
+		new_slide.maxwidth = max_line_width(new_slide.text);
+	} catch (ex) {
+		callback(ex);
+		return;
+	}
+	fade(SLIDE, true, function () {
+		SLIDE = new_slide;
+		IDX = idx;
+
+		TERM.clear();
+		draw_surrounds();
+
+		fade(SLIDE, false, function () {
+			callback();
+		});
+	});
+}
+
+var WORKING = false;
+
+TERM.on('keypress', function (key) {
+	if (key === 'q'.charCodeAt(0)) {
+		TERM.clear();
+		TERM.moveto(1, 1);
+		process.exit(0);
+	}
+
+	if (WORKING)
+		return;
+	WORKING = true;
+
+	var printstuff = function (stuff) {
+		return;
+		stuff = String(stuff);
+		TERM.moveto(-stuff.length, -2);
+		TERM.write(stuff);
+	};
+
+	var end = function () {
+		printstuff('IDX ' + IDX + ' @ ' + new Date().toISOString());
+		WORKING = false;
+	};
+
+	if (key === 'j'.charCodeAt(0)) {
+		switch_slide(IDX + 1, end);
+	} else if (key === 'k'.charCodeAt(0)) {
+		if (IDX > 0)
+			switch_slide(IDX - 1, end);
+		else
+			end();
+	} else if (key === 'r'.charCodeAt(0)) {
+		switch_slide(IDX, end);
+	} else {
+		end();
+		printstuff('fallthrough ' + key);
+	}
+});
+
+function
+find_bounds()
+{
+	var maxw = 0;
+	var maxh = 0;
+
+	var i = 0;
+	for (;;) {
+		try {
+			var text = mod_fs.readFileSync(mod_path.join(
+			    __dirname, 'slides', String(i++)), 'utf8');
+			var lines = text.split(/\n/);
+			lines.shift();
+			maxh = Math.max(lines.length, maxh);
+			maxw = Math.max(max_line_width(text), maxw);
+		} catch (ex) {
+			break;
+		}
+	}
+	return ({
+		h: maxh,
+		w: maxw
+	});
+}
+
+function
+check_size(size)
+{
+	TERM.clear();
+	WORKING = true;
+	if (ANIM) {
+		clearInterval(ANIM);
+		ANIM = null;
+	}
+	var bounds = find_bounds();
+	if (bounds.w >= size.w || bounds.h >= size.h - 3) {
+		var msg = '(' + bounds.w + ',' + bounds.h + ') < ' +
+		    '(' + size.w + ',' + (size.h - 3) + ')!';
+		TERM.clear();
+		TERM.moveto(Math.floor(size.w / 2 - msg.length / 2),
+		    Math.floor(size.h / 2));
+		TERM.colour256(196);
+		TERM.write(msg);
+	} else {
+		switch_slide(IDX, function (err) {
+			if (err) {
+				TERM.clear();
+				TERM.write(err.stack);
+				process.exit(1);
+			}
+			WORKING = false;
+		});
+	}
+}
+
+TERM.on('resize', check_size);
 
 
-display_all_slides();
+var IDX = 0;
+
+/*
+ * Switch to first slide, or die trying:
+ */
+/*
+switch_slide(IDX, function (err) {
+	if (err) {
+		TERM.clear();
+		TERM.write(err.stack);
+		process.exit(1);
+	}
+});
+*/
+
+check_size(TERM.size());

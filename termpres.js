@@ -38,6 +38,15 @@ var INTENSITY = 232;
 var IMAX = 255;
 var IMIN = 232;
 
+var BLUE_RAMP = [ 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 27, 32, 33,
+    38, 39, 44, 45, 45, 81, 81, 51, 51, 123, 123 ];
+
+function
+blue_ramp(ival)
+{
+	return (BLUE_RAMP[ival - IMIN]);
+}
+
 var ANIM;
 
 function
@@ -59,11 +68,24 @@ fade(slide, out, callback)
 
 	clearInterval(ANIM);
 	ANIM = setInterval(function() {
-		TERM.colour256(INTENSITY);
 
 		for (var ll = 0; ll < slide.lines.length; ll++) {
 			TERM.moveto(1 + offset, voffset + ll);
-			TERM.write(slide.lines[ll]);
+
+			var lll = slide.lines[ll];
+			var m = lll.match(/^([%]?)\s*(.*)\s*/);
+			if (m[1] === '%') {
+				var toffset = Math.round(TERM.size().w / 2 -
+				    m[2].length / 2);
+				TERM.colour256(blue_ramp(INTENSITY));
+				TERM.moveto(1 + toffset, voffset + ll);
+				TERM.write(m[2]);
+			} else {
+				TERM.colour256(INTENSITY);
+				TERM.moveto(1 + offset, voffset + ll);
+				TERM.write(slide.lines[ll]);
+			}
+
 		}
 
 		if ((out && INTENSITY <= IMIN) ||

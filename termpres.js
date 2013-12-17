@@ -29,10 +29,6 @@ spin(num)
 var TOTES = 0;
 TERM.clear();
 TERM.cursor(false);
-/*
-for (var i = 0; i < SLIDE.length; i++) {
-	var line = SLIDE[i];
-*/
 
 var INTENSITY = 232;
 var IMAX = 255;
@@ -52,9 +48,6 @@ var ANIM;
 function
 fade(slide, out, callback)
 {
-	//var from = out ? 255 : 232;
-	//var to = out ? 232 : 255;
-
 	if (!slide) {
 		callback();
 		return;
@@ -70,8 +63,6 @@ fade(slide, out, callback)
 	ANIM = setInterval(function() {
 
 		for (var ll = 0; ll < slide.lines.length; ll++) {
-			//TERM.moveto(1 + offset, voffset + ll);
-
 			var lll = slide.lines[ll];
 			var m = lll.match(/^([%]?)\s*(.*)\s*/);
 			if (m[1] === '%') {
@@ -92,8 +83,6 @@ fade(slide, out, callback)
 					TERM.write(segs[k]);
 					blue_on = !blue_on;
 				}
-				//TERM.colour256(INTENSITY);
-				//TERM.write(slide.lines[ll]);
 			}
 
 		}
@@ -152,23 +141,6 @@ max_line_width(text)
 	}
 	return (max);
 }
-
-/*
-function
-display_all_slides()
-{
-	try {
-		SLIDE = mod_fs.readFileSync(mod_path.join(__dirname,
-		    'slides', String(IDX++)), 'utf8');
-		MAXWIDTH = max_line_width(SLIDE);
-	} catch (ex) {
-		TERM.clear();
-		process.exit(0);
-	}
-
-	display_slide(SLIDE, display_all_slides);
-}
-*/
 
 function
 switch_slide(idx, callback)
@@ -305,20 +277,6 @@ check_size(size)
 
 TERM.on('resize', check_size);
 
-
 var IDX = 0;
-
-/*
- * Switch to first slide, or die trying:
- */
-/*
-switch_slide(IDX, function (err) {
-	if (err) {
-		TERM.clear();
-		TERM.write(err.stack);
-		process.exit(1);
-	}
-});
-*/
 
 check_size(TERM.size());

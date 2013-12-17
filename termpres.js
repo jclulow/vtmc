@@ -63,14 +63,14 @@ fade(slide, out, callback)
 	var offset = slide.props.centre ? Math.round(TERM.size().w / 2 -
 	    slide.maxwidth / 2) : 0;
 
-	var voffset = slide.props.vcentre ? Math.floor(TERM.size().h / 2 -
-	    2 - slide.lines.length / 2) + 2: 2;
+	var voffset = slide.props.vcentre ? Math.round((TERM.size().h - 2) / 2 -
+	    slide.lines.length / 2) + 2: 2;
 
 	clearInterval(ANIM);
 	ANIM = setInterval(function() {
 
 		for (var ll = 0; ll < slide.lines.length; ll++) {
-			TERM.moveto(1 + offset, voffset + ll);
+			//TERM.moveto(1 + offset, voffset + ll);
 
 			var lll = slide.lines[ll];
 			var m = lll.match(/^([%]?)\s*(.*)\s*/);
@@ -81,9 +81,19 @@ fade(slide, out, callback)
 				TERM.moveto(1 + toffset, voffset + ll);
 				TERM.write(m[2]);
 			} else {
-				TERM.colour256(INTENSITY);
 				TERM.moveto(1 + offset, voffset + ll);
-				TERM.write(slide.lines[ll]);
+
+				var blue_on = false;
+				var segs = lll.split('~');
+				for (var k = 0; k < segs.length; k++) {
+					TERM.colour256(blue_on ?
+					    blue_ramp(INTENSITY) :
+					    INTENSITY);
+					TERM.write(segs[k]);
+					blue_on = !blue_on;
+				}
+				//TERM.colour256(INTENSITY);
+				//TERM.write(slide.lines[ll]);
 			}
 
 		}

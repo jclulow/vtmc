@@ -16,17 +16,6 @@ var FADE_DELAY = 15;
 
 var SLIDE;
 
-function
-spin(num)
-{
-	var xx = 0;
-	for (var i = 0; i < num; i++) {
-		xx += 1;
-	}
-	return (xx);
-}
-
-var TOTES = 0;
 TERM.clear();
 TERM.cursor(false);
 

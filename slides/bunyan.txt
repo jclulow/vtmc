@@ -15,3 +15,4 @@ centre
 
 * Log verbosely (off by default) to DEBUG, and
      consume those logs via DTrace probes (bunyan -p)
+     (uses ~node-dtrace-provider~!)

@@ -1,0 +1,15 @@
+centre vcentre
+   __        .                   .
+ _|  |_      | .-. .  . .-. :--. |-
+|_    _|     ;|   ||  |(.-' |  | |
+  |__|   `--'  `-' `;-| `-' '  ' `-'
+                   /  ;
+                   `-'
+
+% Node.js at Joyent:
+% Engineering for Production
+
+
+          Joshua M. Clulow
+
+      jmc@joyent.com  @jmclulow

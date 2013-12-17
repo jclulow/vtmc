@@ -11,4 +11,6 @@ centre
     payloads with the json() subroutine
 
 * Add semantically interesting probe points to
-    your applications
+    your applications with ~chrisa/node-dtrace-provider~
+
+* Enables XXX

@@ -7,12 +7,12 @@ centre
       ~davepacheco/node-vasync~ on github
 
 * Similar in concept to ~caolan/async~, but with a focus
-    on exporting current (and past) status to make
-    it easier to understand the state of the system
+    on observability
 
-* Provides a new primitive called ~barrier~: enumerate
-    some set of ongoing operations (which you can add
-    to), and get a ~drain~ event when they all complete
+* Returns status objects updated as flow progresses that
+    can be inspected in core files, or exported via web
+    services or REPLs
 
-* Returns status objects that can be inspected in core
-    files, or exported via web services or REPLs
+* Provides the ~barrier()~ primitive: specify some set of
+    named operations (you can extend the set mid-flight)
+    and get a ~drain~ event when they all complete

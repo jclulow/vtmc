@@ -1,0 +1,17 @@
+centre
+
+% Flamegraphs
+% Profiling and Call Stack Visualisation
+
+* A node implementation, ~davepacheco/node-stackvis~,
+    based on Brendan Gregg's original ~Flamegraph~ work
+
+* Use DTrace to ~profile~ the application, i.e. regularly
+    sample the current stack
+
+* Collect the like components of each sample and draw them
+    together to give a picture of where the program
+    spends its on-CPU time
+
+* Pipe your stacks through ~c++filt~ to demangle the C++
+    method names

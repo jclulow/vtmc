@@ -6,3 +6,11 @@ centre
 * Written by Dave Pacheco (Joyent)
       ~davepacheco/kang~ on github
 
+* A library for exposing self-describing state from
+    a set of processes via a web service
+
+* A client library and command-line tool for collecting,
+    aggregating and inspecting that state
+
+* The exposed state is a set of ~"objects"~ arranged by
+    ~"type"~, formatted as a JSON payload

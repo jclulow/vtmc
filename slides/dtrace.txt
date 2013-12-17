@@ -1,0 +1,14 @@
+centre
+
+% DTrace
+% Production-safe Dynamic Instrumentation
+
+* Zero disabled overhead; low enabled overhead
+
+* In-kernel aggregation for high quantity events
+
+* First class support for handling JSON-formatted
+    payloads with the json() subroutine
+
+* Add semantically interesting probe points to
+    your applications

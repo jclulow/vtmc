@@ -1,0 +1,8 @@
+centre
+
+% Kang
+% Distributed System Observability
+
+* Written by Dave Pacheco (Joyent)
+      ~davepacheco/kang~ on github
+

@@ -1,0 +1,14 @@
+centre
+
+% Restify
+% REST framework for Web Service APIs
+
+* Written by Mark Cavage (Joyent)
+      ~mcavage/node-restify~ on github
+
+* Route handler chains, like Express
+
+* Built-in DTrace probes to measure ~per-route~ and
+    ~per-handler~ latency
+
+* Easy integration with ~Bunyan~ for logging

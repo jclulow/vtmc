@@ -1,0 +1,17 @@
+centre
+
+% Bunyan
+% JSON-formatted Logging Library
+
+* Written by Trent Mick (Joyent)
+      ~trentm/node-bunyan~ on github
+
+* Logs should be formatted for ~machines~,
+    not for ~people~
+
+* Use a filter to make them human-readable
+
+* Log auditing information at INFO to files
+
+* Log verbosely (off by default) to DEBUG, and
+     consume those logs via DTrace probes (bunyan -p)

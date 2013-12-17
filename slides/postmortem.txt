@@ -1,0 +1,18 @@
+centre
+
+% Post-mortem Debugging
+
+* Traditionally done for C software on UNIX systems
+
+* A program could call ~abort()~, or some signals
+   (e.g. ~SIGSEGV~) would end the program and write
+   a ~core file~
+
+* The program can be restarted immediately so that
+   ~service~ may be restored
+
+* Engineers can inspect this ~core file~ later with
+   a debugger, similar to a black box flight recorder
+
+* Operators may also generate a core file ~without~
+   interrupting the program using ~gcore(1)~

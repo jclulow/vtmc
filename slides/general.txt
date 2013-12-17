@@ -1,0 +1,16 @@
+centre
+
+% General Development Tips
+
+* Compile C/C++ code with ~-fno-omit-frame-pointer~,
+     so that stack traces work in DTrace and mdb(1)
+
+* Prefix your property names, making them easier to
+     find when debugging core files, e.g.
+
+    ~var~ iface = { ~if_id~:     0x3423,
+                  ~if_name~:   'interface 0',
+                  ~if_ipaddr~: '192.168.1.1' };
+
+* Name your 'anonymous' functions, making them easier
+     to identify in stack traces

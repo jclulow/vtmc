@@ -1,0 +1,18 @@
+centre
+
+% node-vasync
+% Observable Asynchronous Control Flow
+
+* Written by Dave Pacheco (Joyent)
+      ~davepacheco/node-vasync~ on github
+
+* Similar in concept to ~caolan/async~, but with a focus
+    on exporting current (and past) status to make
+    it easier to understand the state of the system
+
+* Provides a new primitive called ~barrier~: enumerate
+    some set of ongoing operations (which you can add
+    to), and get a ~drain~ event when they all complete
+
+* Returns status objects that can be inspected in core
+    files, or exported via web services or REPLs

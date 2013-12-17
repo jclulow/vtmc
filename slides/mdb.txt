@@ -1,0 +1,17 @@
+centre
+
+%         mdb(1)
+%  The Modular Debugger
+
+* The ~illumos~ (and ~SmartOS~) debugger
+
+* Supports ~node~ core files through ~mdb_v8.so~
+
+       ::jsstack
+          -- Javascript stack traces
+
+       ::findjsobjects
+          -- inspect all Javascript heap objects
+
+       ::jsprint
+          -- print properties of a single object

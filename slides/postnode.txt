@@ -1,0 +1,16 @@
+centre
+
+% Post-mortem Debugging in Node.js
+
+* From ~node v0.10.8~ onwards, we can ~abort()~ on
+    an uncaught exception by using:
+
+      node \
+        ~--abort-on-uncaught-exception~ \
+        app.js
+
+* This preserves the stack that caused the exception
+    in the core file, where we can see it in the
+    debugger
+
+* ~Use this flag everywhere!~

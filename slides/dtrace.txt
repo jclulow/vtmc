@@ -13,4 +13,5 @@ centre
 * Add semantically interesting probe points to
     your applications with ~chrisa/node-dtrace-provider~
 
-* Enables XXX
+* Easily measure latency between events and plot the
+    distribution

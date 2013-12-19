@@ -1,0 +1,19 @@
+{
+  "name": "termpres",
+  "version": "0.0.0",
+  "description": "termpres",
+  "main": "termpres.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jclulow/termpres.git"
+  },
+  "author": "Joshua M. Clulow <josh@sysmgr.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jclulow/termpres/issues"
+  },
+  "homepage": "https://github.com/jclulow/termpres",
+  "dependencies": {
+    "pdfkit": "~0.2.6"
+  }
+}

@@ -4,16 +4,18 @@
 var mod_fs = require('fs');
 var mod_path = require('path');
 
+var mod_extsprintf = require('extsprintf');
 var mod_ansiterm = require('ansiterm');
 
-var TERM = new mod_ansiterm.ANSITerm();
+var sprintf = mod_extsprintf.sprintf;
+
+
+var TERM;
 
 var DECK;
 
 var SLIDE;
 
-TERM.clear();
-TERM.cursor(false);
 
 var INTENSITY = 232;
 var IMAX = 255;
@@ -21,6 +23,10 @@ var IMIN = 232;
 
 var BLUE_RAMP = [ 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 27, 32, 33,
     38, 39, 44, 45, 45, 81, 81, 51, 51, 123, 123 ];
+
+
+var WORKING = false;
+var ANIM;
 
 
 function
@@ -106,8 +112,6 @@ blue_ramp(ival)
 {
 	return (BLUE_RAMP[ival - IMIN]);
 }
-
-var ANIM;
 
 function
 fade(slide, out, callback)
@@ -291,60 +295,30 @@ switch_slide(name, callback)
 	});
 }
 
-var WORKING = false;
-
-TERM.on('keypress', function (key) {
-	if (key === 'q'.charCodeAt(0)) {
-		TERM.clear();
-		TERM.moveto(1, 1);
-		process.exit(0);
-	}
-
-	if (WORKING)
-		return;
-	WORKING = true;
-
-	var printstuff = function (stuff) {
-		return;
-		stuff = String(stuff);
-		TERM.moveto(-stuff.length, -2);
-		TERM.write(stuff);
-	};
-
-	var end = function () {
-		printstuff('FILE ' + CURFILE + ' @ ' + new Date().toISOString());
-		WORKING = false;
-	};
-
-	if (key === 'j'.charCodeAt(0)) {
-		switch_slide(next_file(), end);
-	} else if (key === 'k'.charCodeAt(0)) {
-		switch_slide(prev_file(), end);
-	} else if (key === 'r'.charCodeAt(0)) {
-		switch_slide(CURFILE, end);
-	} else {
-		setImmediate(end);
-		printstuff('fallthrough ' + key);
-	}
-});
-
 function
-find_bounds()
+find_bounds(print_each)
 {
 	var maxw = 0;
 	var maxh = 0;
 
-	var i = 0;
-	for (;;) {
-		try {
-			var text = mod_fs.readFileSync(mod_path.join(
-			    __dirname, 'slides', String(i++)), 'utf8');
-			var lines = text.split(/\n/);
-			lines.shift();
-			maxh = Math.max(lines.length, maxh);
-			maxw = Math.max(max_line_width(text), maxw);
-		} catch (ex) {
-			break;
+	var files = list_files();
+
+	for (var i = 0; i < files.length; i++) {
+		var file = files[i];
+
+		var text = mod_fs.readFileSync(mod_path.join(__dirname,
+		    'slides', file), 'utf8');
+
+		var lines = text.split(/\n/);
+		lines.shift();
+
+		maxh = Math.max(lines.length, maxh);
+		var lw = max_line_width(text)
+		maxw = Math.max(lw, maxw);
+
+		if (print_each) {
+			console.log(sprintf('   %-25s   %3d x %3d', file, lw,
+			    lines.length));
 		}
 	}
 	return ({
@@ -389,7 +363,85 @@ check_size(size)
 	}
 }
 
-TERM.on('resize', check_size);
+function
+setup_terminal()
+{
+		TERM = new mod_ansiterm.ANSITerm();
 
-DECK = load_deck();
-check_size(TERM.size());
+		TERM.clear();
+		TERM.cursor(false);
+		TERM.on('resize', check_size);
+
+		TERM.on('keypress', function (key) {
+			if (key === 'q'.charCodeAt(0)) {
+				TERM.clear();
+				TERM.moveto(1, 1);
+				process.exit(0);
+			}
+
+			if (WORKING)
+				return;
+			WORKING = true;
+
+			var printstuff = function (stuff) {
+				if (!process.env.DEBUG)
+					return;
+
+				stuff = String(stuff);
+				TERM.moveto(-stuff.length, -2);
+				TERM.write(stuff);
+			};
+
+			var end = function () {
+				printstuff('FILE ' + CURFILE + ' @ ' + new Date().toISOString());
+				WORKING = false;
+			};
+
+			if (key === 'j'.charCodeAt(0)) {
+				switch_slide(next_file(), end);
+			} else if (key === 'k'.charCodeAt(0)) {
+				switch_slide(prev_file(), end);
+			} else if (key === 'r'.charCodeAt(0)) {
+				switch_slide(CURFILE, end);
+			} else {
+				setImmediate(end);
+				printstuff('fallthrough ' + key);
+			}
+		});
+}
+
+/*
+ * Main program:
+ */
+
+function
+main(argv)
+{
+	DECK = load_deck();
+
+	if (argv[0] === 'show') {
+		setup_terminal();
+		check_size(TERM.size());
+
+	} else if (argv[0] == 'size') {
+		console.log('slide size report:');
+		console.log('');
+		var bounds = find_bounds(true);
+		console.log('');
+		console.log(sprintf('required:  %3d x %3d', bounds.w, bounds.h));
+		console.log(sprintf('current:   %3d x %3d', process.stdout.columns,
+		    process.stdout.rows));
+		process.exit(0);
+
+	} else {
+		console.error('Usage: mcterm [command] ...');
+		console.error('');
+		console.error('     show     present slideshow');
+		console.error('     size     measure required terminal size for deck');
+		console.error('');
+		process.exit(1);
+
+	}
+}
+
+main(process.argv.slice(2));

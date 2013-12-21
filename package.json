@@ -14,6 +14,7 @@
   },
   "homepage": "https://github.com/jclulow/termpres",
   "dependencies": {
-    "ansiterm": "~0.0.1"
+    "ansiterm": "~0.0.1",
+    "extsprintf": "~1.0.2"
   }
 }

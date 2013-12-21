@@ -4,7 +4,7 @@
 var mod_fs = require('fs');
 var mod_path = require('path');
 
-var mod_ansiterm = require('./lib/ansiterm');
+var mod_ansiterm = require('ansiterm');
 
 var TERM = new mod_ansiterm.ANSITerm();
 

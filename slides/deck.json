@@ -1,0 +1,12 @@
+{
+  "header": {
+    "centre": "Node.js In Production At Joyent"
+  },
+  "footer": {
+    "left": "Joshua M. Clulow",
+    "right": "\u2295 Joyent"
+  },
+  "fade": {
+    "delay": 15
+  }
+}

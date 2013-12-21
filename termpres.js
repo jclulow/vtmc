@@ -26,6 +26,77 @@ var IMIN = 232;
 var BLUE_RAMP = [ 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 27, 32, 33,
     38, 39, 44, 45, 45, 81, 81, 51, 51, 123, 123 ];
 
+
+
+var CURFILE;
+
+function
+list_files()
+{
+	var dir = mod_path.join(__dirname, 'slides'); /* XXX */
+	var ents = mod_fs.readdirSync(dir);
+	var out = [];
+
+	for (var i = 0; i < ents.length; i++) {
+		var ent = ents[i];
+
+		if (ent.match(/\.txt$/))
+			out.push(ent);
+	}
+
+	out.sort();
+
+	return (out);
+}
+
+function
+prev_file()
+{
+	var files = list_files();
+
+	if (!files || files.length < 1)
+		return (null);
+
+	if (!CURFILE)
+		return (files[0]);
+
+	var idx = files.indexOf(CURFILE);
+	if (idx === -1) {
+		return (files[0]);
+	}
+
+	/*
+	 * If we're already on the last slide, don't advance.
+	 * Also do not advance _past_ zero.
+	 */
+	if (idx === 0 || idx - 1 < 0)
+		return (null);
+
+	return (files[idx - 1]);
+}
+
+function
+next_file()
+{
+	var files = list_files();
+
+	if (!files || files.length < 1)
+		return (null);
+
+	if (!CURFILE)
+		return (files[0]);
+
+	var idx = files.indexOf(CURFILE);
+	if (idx === -1)
+		return (files[0]);
+
+	if (idx === files.length - 1 || idx + 1 > files.length)
+		return (null);
+
+	return (files[idx + 1]);
+}
+
+
 function
 blue_ramp(ival)
 {
@@ -132,9 +203,15 @@ max_line_width(text)
 }
 
 function
-switch_slide(idx, callback)
+switch_slide(name, callback)
 {
 	var new_slide;
+
+	if (!name) {
+		if (callback)
+			setImmediate(callback);
+		return;
+	}
 
 	if (!callback)
 		callback = function () {};
@@ -142,7 +219,7 @@ switch_slide(idx, callback)
 	try {
 		var new_slide = {
 			text: mod_fs.readFileSync(mod_path.join(__dirname,
-			    'slides', String(idx)), 'utf8'),
+			    'slides', name), 'utf8'),
 			maxwidth: 0,
 			props: {}
 		};
@@ -158,7 +235,7 @@ switch_slide(idx, callback)
 	}
 	fade(SLIDE, true, function () {
 		SLIDE = new_slide;
-		IDX = idx;
+		CURFILE = name;
 
 		TERM.clear();
 		draw_surrounds();
@@ -190,21 +267,18 @@ TERM.on('keypress', function (key) {
 	};
 
 	var end = function () {
-		printstuff('IDX ' + IDX + ' @ ' + new Date().toISOString());
+		printstuff('FILE ' + CURFILE + ' @ ' + new Date().toISOString());
 		WORKING = false;
 	};
 
 	if (key === 'j'.charCodeAt(0)) {
-		switch_slide(IDX + 1, end);
+		switch_slide(next_file(), end);
 	} else if (key === 'k'.charCodeAt(0)) {
-		if (IDX > 0)
-			switch_slide(IDX - 1, end);
-		else
-			end();
+		switch_slide(prev_file(), end);
 	} else if (key === 'r'.charCodeAt(0)) {
-		switch_slide(IDX, end);
+		switch_slide(CURFILE, end);
 	} else {
-		end();
+		setImmediate(end);
 		printstuff('fallthrough ' + key);
 	}
 });
@@ -253,7 +327,13 @@ check_size(size)
 		TERM.colour256(196);
 		TERM.write(msg);
 	} else {
-		switch_slide(IDX, function (err) {
+		/*
+		 * Pick an initial slide if we have not yet done so:
+		 */
+		if (!CURFILE)
+			CURFILE = next_file();
+
+		switch_slide(CURFILE, function (err) {
 			if (err) {
 				TERM.clear();
 				TERM.write(err.stack);
@@ -265,7 +345,5 @@ check_size(size)
 }
 
 TERM.on('resize', check_size);
-
-var IDX = 0;
 
 check_size(TERM.size());

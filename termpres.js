@@ -8,11 +8,7 @@ var mod_ansiterm = require('ansiterm');
 
 var TERM = new mod_ansiterm.ANSITerm();
 
-var TITLE = 'Node.js In Production At Joyent';
-var FOOTL = 'Joshua M. Clulow';
-var FOOTR = '\u2295 Joyent';
-
-var FADE_DELAY = 15;
+var DECK;
 
 var SLIDE;
 
@@ -27,6 +23,14 @@ var BLUE_RAMP = [ 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 27, 32, 33,
     38, 39, 44, 45, 45, 81, 81, 51, 51, 123, 123 ];
 
 
+function
+load_deck()
+{
+	var file = mod_path.join(__dirname, 'slides', 'deck.json'); /* XXX */
+	var str = mod_fs.readFileSync(file, 'utf8');
+
+	return (JSON.parse(str));
+}
 
 var CURFILE;
 
@@ -108,6 +112,10 @@ var ANIM;
 function
 fade(slide, out, callback)
 {
+	var delay = 15;
+	if (DECK.fade && DECK.fade.delay)
+		delay = DECK.fade.delay;
+
 	if (!slide) {
 		callback();
 		return;
@@ -155,23 +163,60 @@ fade(slide, out, callback)
 		} else {
 			INTENSITY += out ? -1 : 1;
 		}
-	}, FADE_DELAY);
+	}, delay);
+}
+
+function
+text_left(text, row)
+{
+	TERM.moveto(3, row);
+	TERM.write(text);
+}
+
+function
+text_right(text, row)
+{
+	TERM.moveto(-3 - text.length, row);
+	TERM.write(text);
+}
+
+function
+text_centre(text, row)
+{
+	TERM.moveto(Math.round(TERM.size().w / 2 - text.length / 2), row);
+	TERM.write(text);
 }
 
 function
 draw_surrounds()
 {
-	TERM.colour256(208);
-	TERM.moveto(Math.round(TERM.size().w / 2 - TITLE.length / 2), 1);
-	TERM.write(TITLE);
+	var row;
 
-	TERM.moveto(3, -1);
-	TERM.write(FOOTL);
-	TERM.moveto(-3 - FOOTR.length, -1);
-	TERM.write(FOOTR);
+	TERM.colour256(208); /* XXX maybe people don't just want orange? */
+
+
+	if (DECK.header) {
+		row = 1;
+		if (DECK.header.left)
+			text_left(DECK.header.left, row);
+		if (DECK.header.right)
+			text_right(DECK.header.right, row);
+		var ctr = DECK.header.centre || DECK.header.center;
+		if (ctr)
+			text_centre(ctr, row);
+	}
+
+	if (DECK.footer) {
+		row = -1;
+		if (DECK.footer.left)
+			text_left(DECK.footer.left, row);
+		if (DECK.footer.right)
+			text_right(DECK.footer.right, row);
+		var ctr = DECK.footer.centre || DECK.footer.center;
+		if (ctr)
+			text_centre(ctr, row);
+	}
 }
-
-
 
 
 function
@@ -346,4 +391,5 @@ check_size(size)
 
 TERM.on('resize', check_size);
 
+DECK = load_deck();
 check_size(TERM.size());

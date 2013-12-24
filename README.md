@@ -25,6 +25,10 @@ Control Keys:
      q        quit
 ```
 
+## Screenshot
+
+![vtmc screenshot](http://us-east.manta.joyent.com/jmc/public/images/vtmc.png)
+
 ## License
 
 MIT

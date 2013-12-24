@@ -33,8 +33,21 @@ load_deck()
 {
 	var file = mod_path.join(DECKDIR, 'deck.json');
 	var str = mod_fs.readFileSync(file, 'utf8');
+	var deck = JSON.parse(str);
 
-	return (JSON.parse(str));
+	/*
+	 * Allow for international spellings of configuration:
+	 */
+	if (deck.header && deck.header.center) {
+		deck.header.centre = deck.header.center;
+		delete deck.header.center;
+	}
+	if (deck.footer && deck.footer.center) {
+		deck.footer.centre = deck.footer.center;
+		delete deck.footer.center;
+	}
+
+	return (deck);
 }
 
 function
@@ -210,6 +223,9 @@ fade(slide, out, callback)
 function
 text_left(text, row)
 {
+	if (!text)
+		return;
+
 	TERM.moveto(3, row);
 	TERM.write(text);
 }
@@ -217,6 +233,9 @@ text_left(text, row)
 function
 text_right(text, row)
 {
+	if (!text)
+		return;
+
 	TERM.moveto(-3 - text.length, row);
 	TERM.write(text);
 }
@@ -224,6 +243,9 @@ text_right(text, row)
 function
 text_centre(text, row)
 {
+	if (!text)
+		return;
+
 	TERM.moveto(Math.round(TERM.size().w / 2 - text.length / 2), row);
 	TERM.write(text);
 }
@@ -232,30 +254,19 @@ function
 draw_surrounds()
 {
 	var row;
-	var ctr;
 
 	TERM.colour256(208); /* XXX maybe people don't just want orange? */
 
-	if (DECK.header) {
-		row = 1;
-		if (DECK.header.left)
-			text_left(DECK.header.left, row);
-		if (DECK.header.right)
-			text_right(DECK.header.right, row);
-		ctr = DECK.header.centre || DECK.header.center;
-		if (ctr)
-			text_centre(ctr, row);
-	}
+	do_one('header', 1);
+	do_one('footer', -1);
 
-	if (DECK.footer) {
-		row = -1;
-		if (DECK.footer.left)
-			text_left(DECK.footer.left, row);
-		if (DECK.footer.right)
-			text_right(DECK.footer.right, row);
-		ctr = DECK.footer.centre || DECK.footer.center;
-		if (ctr)
-			text_centre(ctr, row);
+	function do_one(key, row) {
+		if (!DECK[key])
+			return;
+
+		text_left(DECK[key].left, row);
+		text_right(DECK[key].right, row);
+		text_centre(DECK[key].centre, row);
 	}
 }
 
@@ -289,6 +300,31 @@ max_line_width(text)
 }
 
 function
+parse_properties(propsline)
+{
+	var out = {};
+	var new_props = propsline.trim().split(/\s+/);
+	for (var i = 0; i < new_props.length; i++) {
+		var new_prop = new_props[i];
+
+		/*
+		 * Allow for international spellings of properties:
+		 */
+		switch (new_prop) {
+		case 'center':
+			new_prop = 'centre';
+			break;
+		case 'vcenter':
+			new_prop = 'vcentre';
+			break;
+		}
+
+		out[new_prop] = true;
+	}
+	return (out);
+}
+
+function
 switch_slide(name, callback)
 {
 	var new_slide;
@@ -311,10 +347,7 @@ switch_slide(name, callback)
 			props: {}
 		};
 		new_slide.lines = new_slide.text.split(/\n/);
-		new_props = new_slide.lines.shift().trim().split(/\s+/);
-		for (var i = 0; i < new_props.length; i++) {
-			new_slide.props[new_props[i]] = true;
-		}
+		new_slide.props = parse_properties(new_slide.lines.shift());
 		new_slide.maxwidth = max_line_width(new_slide.text);
 	} catch (ex) {
 		callback(ex);

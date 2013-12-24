@@ -9,13 +9,13 @@ var mod_ansiterm = require('ansiterm');
 
 var sprintf = mod_extsprintf.sprintf;
 
-
-var TERM;
+var DECKDIR;
 
 var DECK;
-
+var CURFILE;
 var SLIDE;
 
+var TERM;
 
 var INTENSITY = 232;
 var IMAX = 255;
@@ -24,7 +24,6 @@ var IMIN = 232;
 var BLUE_RAMP = [ 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 27, 32, 33,
     38, 39, 44, 45, 45, 81, 81, 51, 51, 123, 123 ];
 
-
 var WORKING = false;
 var ANIM;
 
@@ -32,19 +31,16 @@ var ANIM;
 function
 load_deck()
 {
-	var file = mod_path.join(__dirname, 'slides', 'deck.json'); /* XXX */
+	var file = mod_path.join(DECKDIR, 'deck.json');
 	var str = mod_fs.readFileSync(file, 'utf8');
 
 	return (JSON.parse(str));
 }
 
-var CURFILE;
-
 function
 list_files()
 {
-	var dir = mod_path.join(__dirname, 'slides'); /* XXX */
-	var ents = mod_fs.readdirSync(dir);
+	var ents = mod_fs.readdirSync(DECKDIR);
 	var out = [];
 
 	for (var i = 0; i < ents.length; i++) {
@@ -106,11 +102,69 @@ next_file()
 	return (files[idx + 1]);
 }
 
-
 function
 blue_ramp(ival)
 {
 	return (BLUE_RAMP[ival - IMIN]);
+}
+
+function
+write_text(text, blue, intensity)
+{
+	TERM.colour256(blue ? blue_ramp(intensity) : intensity);
+	TERM.write(text);
+}
+
+function
+write_heading(text, intensity, voffset)
+{
+	var toffset = Math.round(TERM.size().w / 2 - text.length / 2);
+
+	TERM.moveto(1 + toffset, voffset);
+	write_text(text, true, intensity);
+}
+
+function
+write_line(line, intensity, offset, voffset)
+{
+	var blue_on = false;
+	var escape = false;
+	var partial = '';
+
+	if (line[0] === '%') {
+		write_heading(line.substr(1).trim(), intensity, voffset);
+		return;
+	}
+
+	TERM.moveto(offset, voffset);
+
+	for (var i = 0; i < line.length; i++) {
+		var c = line[i];
+
+		if (escape) {
+			partial += c;
+			continue;
+		}
+
+		switch (c) {
+		case '\\':
+			escape = true;
+			break;
+		case '~':
+			if (partial.length > 0) {
+				write_text(partial, blue_on, intensity);
+				partial = '';
+			}
+			blue_on = !blue_on;
+			break;
+		default:
+			partial += c;
+			break;
+		}
+	}
+
+	if (partial.length > 0)
+		write_text(partial, blue_on, intensity);
 }
 
 function
@@ -125,38 +179,20 @@ fade(slide, out, callback)
 		return;
 	}
 
-	var offset = slide.props.centre ? Math.round(TERM.size().w / 2 -
+	var offset = slide.props.centre ?
+	    Math.round(TERM.size().w / 2 -
 	    slide.maxwidth / 2) : 0;
 
-	var voffset = slide.props.vcentre ? Math.round((TERM.size().h - 2) / 2 -
-	    slide.lines.length / 2) + 2: 2;
+	var voffset = slide.props.vcentre ?
+	    Math.round((TERM.size().h - 2) / 2 -
+	    slide.lines.length / 2) + 2 : 2;
 
 	clearInterval(ANIM);
 	ANIM = setInterval(function() {
 
-		for (var ll = 0; ll < slide.lines.length; ll++) {
-			var lll = slide.lines[ll];
-			var m = lll.match(/^([%]?)\s*(.*)\s*/);
-			if (m[1] === '%') {
-				var toffset = Math.round(TERM.size().w / 2 -
-				    m[2].length / 2);
-				TERM.colour256(blue_ramp(INTENSITY));
-				TERM.moveto(1 + toffset, voffset + ll);
-				TERM.write(m[2]);
-			} else {
-				TERM.moveto(1 + offset, voffset + ll);
-
-				var blue_on = false;
-				var segs = lll.split('~');
-				for (var k = 0; k < segs.length; k++) {
-					TERM.colour256(blue_on ?
-					    blue_ramp(INTENSITY) :
-					    INTENSITY);
-					TERM.write(segs[k]);
-					blue_on = !blue_on;
-				}
-			}
-
+		for (var i = 0; i < slide.lines.length; i++) {
+			write_line(slide.lines[i], INTENSITY,
+			    1 + offset, voffset + i);
 		}
 
 		if ((out && INTENSITY <= IMIN) ||
@@ -164,9 +200,10 @@ fade(slide, out, callback)
 			clearInterval(ANIM);
 			ANIM = null;
 			callback();
-		} else {
-			INTENSITY += out ? -1 : 1;
+			return;
 		}
+
+		INTENSITY += out ? -1 : 1;
 	}, delay);
 }
 
@@ -195,9 +232,9 @@ function
 draw_surrounds()
 {
 	var row;
+	var ctr;
 
 	TERM.colour256(208); /* XXX maybe people don't just want orange? */
-
 
 	if (DECK.header) {
 		row = 1;
@@ -205,7 +242,7 @@ draw_surrounds()
 			text_left(DECK.header.left, row);
 		if (DECK.header.right)
 			text_right(DECK.header.right, row);
-		var ctr = DECK.header.centre || DECK.header.center;
+		ctr = DECK.header.centre || DECK.header.center;
 		if (ctr)
 			text_centre(ctr, row);
 	}
@@ -216,7 +253,7 @@ draw_surrounds()
 			text_left(DECK.footer.left, row);
 		if (DECK.footer.right)
 			text_right(DECK.footer.right, row);
-		var ctr = DECK.footer.centre || DECK.footer.center;
+		ctr = DECK.footer.centre || DECK.footer.center;
 		if (ctr)
 			text_centre(ctr, row);
 	}
@@ -255,6 +292,7 @@ function
 switch_slide(name, callback)
 {
 	var new_slide;
+	var new_props;
 
 	if (!name) {
 		if (callback)
@@ -266,14 +304,14 @@ switch_slide(name, callback)
 		callback = function () {};
 
 	try {
-		var new_slide = {
-			text: mod_fs.readFileSync(mod_path.join(__dirname,
-			    'slides', name), 'utf8'),
+		new_slide = {
+			text: mod_fs.readFileSync(mod_path.join(DECKDIR,
+			    name), 'utf8'),
 			maxwidth: 0,
 			props: {}
 		};
 		new_slide.lines = new_slide.text.split(/\n/);
-		var new_props = new_slide.lines.shift().trim().split(/\s+/);
+		new_props = new_slide.lines.shift().trim().split(/\s+/);
 		for (var i = 0; i < new_props.length; i++) {
 			new_slide.props[new_props[i]] = true;
 		}
@@ -306,14 +344,14 @@ find_bounds(print_each)
 	for (var i = 0; i < files.length; i++) {
 		var file = files[i];
 
-		var text = mod_fs.readFileSync(mod_path.join(__dirname,
-		    'slides', file), 'utf8');
+		var text = mod_fs.readFileSync(mod_path.join(DECKDIR,
+		    file), 'utf8');
 
 		var lines = text.split(/\n/);
 		lines.shift();
 
 		maxh = Math.max(lines.length, maxh);
-		var lw = max_line_width(text)
+		var lw = max_line_width(text);
 		maxw = Math.max(lw, maxw);
 
 		if (print_each) {
@@ -383,17 +421,7 @@ setup_terminal()
 				return;
 			WORKING = true;
 
-			var printstuff = function (stuff) {
-				if (!process.env.DEBUG)
-					return;
-
-				stuff = String(stuff);
-				TERM.moveto(-stuff.length, -2);
-				TERM.write(stuff);
-			};
-
 			var end = function () {
-				printstuff('FILE ' + CURFILE + ' @ ' + new Date().toISOString());
 				WORKING = false;
 			};
 
@@ -405,7 +433,6 @@ setup_terminal()
 				switch_slide(CURFILE, end);
 			} else {
 				setImmediate(end);
-				printstuff('fallthrough ' + key);
 			}
 		});
 }
@@ -417,30 +444,46 @@ setup_terminal()
 function
 main(argv)
 {
-	DECK = load_deck();
+	var command = argv[0];
+
+	if (command !== 'show' && command !== 'size') {
+		console.error('Usage: vtmc COMMAND [DIRECTORY]');
+		console.error('');
+		console.error('Commands:');
+		console.error('');
+		console.error('     show     present slideshow');
+		console.error('     size     measure required terminal ' +
+		    'size for deck');
+		console.error('');
+		console.error('If no directory specified, the current ' +
+		    'working directory will be used.');
+		console.error('');
+		process.exit(1);
+	}
+
+	DECKDIR = argv[1] ? argv[1] : process.cwd();
+
+	try {
+		DECK = load_deck();
+	} catch (ex) {
+		console.error('ERROR: could not load slide deck: %s',
+		    ex.message);
+		process.exit(5);
+	}
 
 	if (argv[0] === 'show') {
 		setup_terminal();
 		check_size(TERM.size());
-
-	} else if (argv[0] == 'size') {
+	} else {
 		console.log('slide size report:');
 		console.log('');
 		var bounds = find_bounds(true);
 		console.log('');
-		console.log(sprintf('required:  %3d x %3d', bounds.w, bounds.h));
-		console.log(sprintf('current:   %3d x %3d', process.stdout.columns,
-		    process.stdout.rows));
+		console.log(sprintf('required:  %3d x %3d', bounds.w,
+		    bounds.h));
+		console.log(sprintf('current:   %3d x %3d',
+		    process.stdout.columns, process.stdout.rows));
 		process.exit(0);
-
-	} else {
-		console.error('Usage: mcterm [command] ...');
-		console.error('');
-		console.error('     show     present slideshow');
-		console.error('     size     measure required terminal size for deck');
-		console.error('');
-		process.exit(1);
-
 	}
 }
 

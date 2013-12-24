@@ -458,6 +458,13 @@ main(argv)
 		console.error('If no directory specified, the current ' +
 		    'working directory will be used.');
 		console.error('');
+		console.error('Control Keys:');
+		console.error('');
+		console.error('     j        next slide');
+		console.error('     k        previous slide');
+		console.error('     r        reload current slide');
+		console.error('     q        quit');
+		console.error('');
 		process.exit(1);
 	}
 

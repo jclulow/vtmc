@@ -1,20 +1,22 @@
 {
-  "name": "termpres",
-  "version": "0.0.0",
-  "description": "termpres",
-  "main": "termpres.js",
+  "name": "vtmc",
+  "version": "0.0.1",
+  "description": "Terminal-based Slide/Presentation Software",
   "repository": {
     "type": "git",
-    "url": "git://github.com/jclulow/termpres.git"
+    "url": "git://github.com/jclulow/vtmc.git"
   },
   "author": "Joshua M. Clulow <josh@sysmgr.org>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jclulow/termpres/issues"
+    "url": "https://github.com/jclulow/vtmc/issues"
   },
-  "homepage": "https://github.com/jclulow/termpres",
+  "homepage": "https://github.com/jclulow/vtmc",
   "dependencies": {
     "ansiterm": "~0.0.1",
     "extsprintf": "~1.0.2"
+  },
+  "bin": {
+    "vtmc": "./cmd/vtmc.js"
   }
 }

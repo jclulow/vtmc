@@ -462,6 +462,16 @@ setup_terminal()
 				switch_slide(next_file(), end);
 			} else if (key === 'k'.charCodeAt(0)) {
 				switch_slide(prev_file(), end);
+			} else if (key === '>'.charCodeAt(0)) {
+				switch_slide(next_file(), end);
+			} else if (key === '<'.charCodeAt(0)) {
+				switch_slide(prev_file(), end);
+			} else if (key === 'n'.charCodeAt(0)) {
+				switch_slide(next_file(), end);
+			} else if (key === ' '.charCodeAt(0)) {
+				switch_slide(next_file(), end);
+			} else if (key === 'p'.charCodeAt(0)) {
+				switch_slide(prev_file(), end);
 			} else if (key === 'r'.charCodeAt(0)) {
 				switch_slide(CURFILE, end);
 			} else {
@@ -493,10 +503,10 @@ main(argv)
 		console.error('');
 		console.error('Control Keys:');
 		console.error('');
-		console.error('     j        next slide');
-		console.error('     k        previous slide');
-		console.error('     r        reload current slide');
-		console.error('     q        quit');
+		console.error('     j/n/>/<space>  next slide');
+		console.error('     k/p/<          previous slide');
+		console.error('     r              reload current slide');
+		console.error('     q              quit');
 		console.error('');
 		process.exit(1);
 	}

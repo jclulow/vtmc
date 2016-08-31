@@ -16,17 +16,17 @@ var CURFILE;
 var SLIDE;
 
 var TERM;
+var LIGHT = false;
 
 var INTENSITY = 232;
 var IMAX = 255;
 var IMIN = 232;
 
-var BLUE_RAMP = [ 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 27, 32, 33,
+var BLUE_RAMP = [ 17, 17, 17, 18, 18, 19, 19, 20, 20, 21, 27, 32, 33,
     38, 39, 44, 45, 45, 81, 81, 51, 51, 123, 123 ];
 
 var WORKING = false;
 var ANIM;
-
 
 function
 load_deck()
@@ -208,15 +208,25 @@ fade(slide, out, callback)
 			    1 + offset, voffset + i);
 		}
 
-		if ((out && INTENSITY <= IMIN) ||
-		    (!out && INTENSITY >= IMAX)) {
-			clearInterval(ANIM);
-			ANIM = null;
-			callback();
-			return;
+		if (LIGHT) {
+			if ((!out && INTENSITY <= IMIN) ||
+			    (out && INTENSITY >= IMAX)) {
+				clearInterval(ANIM);
+				ANIM = null;
+				callback();
+				return;
+			}
+			INTENSITY += out ? 1 : -1;
+		} else {
+			if ((out && INTENSITY <= IMIN) ||
+			    (!out && INTENSITY >= IMAX)) {
+				clearInterval(ANIM);
+				ANIM = null;
+				callback();
+				return;
+			}
+			INTENSITY += out ? -1 : 1;
 		}
-
-		INTENSITY += out ? -1 : 1;
 	}, delay);
 }
 
@@ -479,16 +489,19 @@ main(argv)
 {
 	var command = argv[0];
 
-	if (command !== 'show' && command !== 'size') {
+	if (command !== 'show' && command !== 'shine' && command !== 'size') {
 		console.error('Usage: vtmc COMMAND [DIRECTORY]');
 		console.error('');
 		console.error('Commands:');
 		console.error('');
 		console.error('     show     present slideshow');
+		console.error('     shine    present slideshow on white background');
 		console.error('     size     measure required terminal ' +
 		    'size for deck');
 		console.error('');
-		console.error('If no directory specified, the current ' +
+		console.error('Directory:');
+		console.error('');
+		console.error('     If not specified, the current ' +
 		    'working directory will be used.');
 		console.error('');
 		console.error('Control Keys:');
@@ -502,7 +515,7 @@ main(argv)
 	}
 
 	DECKDIR = argv[1] ? argv[1] : process.cwd();
-
+    
 	try {
 		DECK = load_deck();
 	} catch (ex) {
@@ -512,6 +525,11 @@ main(argv)
 	}
 
 	if (argv[0] === 'show') {
+		setup_terminal();
+		check_size(TERM.size());
+	} else if (argv[0] === 'shine') {
+		LIGHT = true;
+		INTENSITY = 255;
 		setup_terminal();
 		check_size(TERM.size());
 	} else {
